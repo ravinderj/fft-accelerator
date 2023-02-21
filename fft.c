@@ -1,6 +1,9 @@
 #include <complex.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
 
 const double PI = 3.141592653589793238460;
 
@@ -38,18 +41,56 @@ void fft(complex double *data, int size) {
 
   for (int k = 0; k < size / 2; k++) {
     complex double t = odd[k] * cexp(-2I * PI * k / size);
-    data[k]            = even[k] + t;
+    data[k] = even[k] + t;
     data[k + size / 2] = even[k] - t;
   }
 }
 
-int main(int argc, char const *argv[]) {
-  complex double data[8] = {1, 1, 1, 1, 0, 0, 0, 0};
-  int size = sizeof(data) / sizeof(complex double);
+static inline uint32_t rdcyc() {
+  uint32_t val;
+  asm volatile ("rdcycle %0 ;\n":"=r" (val) ::);
+  return val;
+}
 
+void genInput(int size, complex double *in) {
+  srand(time(NULL));
+  for (int i = 0; i < size; i++) {
+    in[i] = rand() % 10;
+  }
+}
+
+int main(int argc, char const *argv[]) {
+
+  if (argc < 2) {
+    printf("usage: <executable> size [-DRDCYCLE]\n");
+    return 1;
+  }
+
+  int size = atoi(argv[1]);
+  struct timeval start, end;
+  uint32_t t_beg, t_end;
+
+  complex double *data = malloc(size * sizeof(int));
+  if (data == NULL) {
+    printf("Memory not allocate\n");
+    exit(1);
+  }
+  genInput(size, data);
+
+  #ifdef RDCYCLE
+  t_beg = rdcyc();
+  // host = "RISC-V";
+  #endif
+  gettimeofday(&start, NULL);
   fft(data, size);
+  gettimeofday(&end, NULL);
+  #ifdef RDCYCLE
+  t_end = rdcyc();
+  printf("%d\n", t_end - t_beg);
+  #endif
 
   show(" ", data);
-
+  printf("\nTime taken: %dµsec\n", end.tv_usec - start.tv_usec);
+  free(data);
   return 0;
 }
