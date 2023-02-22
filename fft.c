@@ -4,17 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include "helper.h"
 
 const double PI = 3.141592653589793238460;
-
-void show(const char *s, complex double buf[]) {
-  printf("%s", s);
-  for (int i = 0; i < 8; i++)
-    if (!cimag(buf[i]))
-      printf("%g ", creal(buf[i]));
-    else
-      printf("(%g, %g) ", creal(buf[i]), cimag(buf[i]));
-}
 
 void splitEvenOddPositioned(complex double *data, int size,
                             complex double *even, complex double *odd) {
@@ -30,8 +22,9 @@ void splitEvenOddPositioned(complex double *data, int size,
 }
 
 void fft(complex double *data, int size) {
-  if (size <= 1)
+  if (size <= 1) {
     return;
+  }
   complex double even[size / 2];
   complex double odd[size / 2];
   splitEvenOddPositioned(data, size, even, odd);
@@ -46,51 +39,27 @@ void fft(complex double *data, int size) {
   }
 }
 
-static inline uint32_t rdcyc() {
-  uint32_t val;
-  asm volatile ("rdcycle %0 ;\n":"=r" (val) ::);
-  return val;
-}
-
-void genInput(int size, complex double *in) {
-  srand(time(NULL));
-  for (int i = 0; i < size; i++) {
-    in[i] = rand() % 10;
-  }
-}
-
 int main(int argc, char const *argv[]) {
-
-  if (argc < 2) {
-    printf("usage: <executable> size [-DRDCYCLE]\n");
-    return 1;
-  }
-
-  int size = atoi(argv[1]);
   struct timeval start, end;
   uint32_t t_beg, t_end;
 
-  complex double *data = malloc(size * sizeof(int));
-  if (data == NULL) {
-    printf("Memory not allocate\n");
-    exit(1);
-  }
-  genInput(size, data);
+  int size = 8;
+  complex double data[] = {1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0};
 
-  #ifdef RDCYCLE
+#ifdef RDCYCLE
   t_beg = rdcyc();
-  // host = "RISC-V";
-  #endif
+#endif
   gettimeofday(&start, NULL);
   fft(data, size);
   gettimeofday(&end, NULL);
-  #ifdef RDCYCLE
+#ifdef RDCYCLE
   t_end = rdcyc();
-  printf("%d\n", t_end - t_beg);
-  #endif
+  printf("Cycle count: %d\n", t_end - t_beg);
+#endif
 
-  show(" ", data);
+  for (int i = 0; i < size; i++) {
+    printf("(%.2f %.2f),", creal(data[i]), cimag(data[i]));
+  }
   printf("\nTime taken: %dµsec\n", end.tv_usec - start.tv_usec);
-  free(data);
   return 0;
 }
