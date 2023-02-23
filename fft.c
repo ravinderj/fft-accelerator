@@ -1,10 +1,10 @@
+#include "helper.h"
 #include <complex.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include "helper.h"
 
 const double PI = 3.141592653589793238460;
 
@@ -40,26 +40,28 @@ void fft(complex double *data, int size) {
 }
 
 int main(int argc, char const *argv[]) {
-  struct timeval start, end;
-  uint32_t t_beg, t_end;
+  if (argc < 2) {
+    printf("needs an argument. int size\n");
+    exit(1);
+  }
 
-  int size = 8;
-  complex double data[] = {1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0};
+  int size = atoi(argv[1]);
+  complex double data[size];
+  genSineWave(size, data);
 
 #ifdef RDCYCLE
   t_beg = rdcyc();
 #endif
-  gettimeofday(&start, NULL);
+  clock_t start, end;
+  start = clock();
   fft(data, size);
-  gettimeofday(&end, NULL);
+  end = clock();
 #ifdef RDCYCLE
   t_end = rdcyc();
   printf("Cycle count: %d\n", t_end - t_beg);
 #endif
 
-  for (int i = 0; i < size; i++) {
-    printf("(%.2f %.2f),", creal(data[i]), cimag(data[i]));
-  }
-  printf("\nTime taken: %dµsec\n", end.tv_usec - start.tv_usec);
+  printf("FFT,%d,%.f µsec\n", size,
+         1000000 * (double)(end - start) / (double)CLOCKS_PER_SEC);
   return 0;
 }
