@@ -47,3 +47,44 @@ FFT,8192,6081 µsec
 FFT,8192,2553 µsec
 FFT,8192,3813 µsec
 FFT,8192,2335 µsec
+
+
+// dft on riscv simulator
+512,109338 µsec,109343862 (spike simulator)
+1024,438342 µsec,438348330
+2048,1757813 µsec,1757818502
+8192,28435983 µsec,-1628782836 (interger overflow - number should be around 28 billion)
+
+// fft on riscv simulator
+512,1052 µsec,1057666
+1024,2335 µsec,2340694
+2048,5133 µsec,5138062
+8192,24229 µsec,24235438
+
+// on rocketchip simulator
+512,1815135
+1024,4073594
+2048,9115902
+8192,32698368(estimation),(error 7)
+
+// fft accelarator
+8,754
+16,1393
+32,2673
+128,10257
+256,20369
+
+rdcycles per 1 point
+8,94.25
+16,87.0625
+32,83.53125
+128,80.1328125
+256,79.56640625
+
+avg = 85
+
+estimation
+512,43520
+1024,87040
+2048,174080
+8192,696320
